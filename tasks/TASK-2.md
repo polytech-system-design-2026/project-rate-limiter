@@ -40,7 +40,7 @@
 | GET | `/resource` | — | `{"message": "ok"}` | 200; 429 — `{"detail": "rate limit exceeded", "retry_after": 7}` + заголовок `Retry-After: 7` |
 | GET | `/limits` | — | `{"global": {"limit": 100, "window_seconds": 60}, "per_ip": {"limit": 10, "window_seconds": 60}}` | 200 |
 | PUT | `/limits` | то же тело | то же | 200; 422 — `limit < 1`, `window_seconds < 1` |
-| GET | `/health` | — | `{"status": "ok"}` | 200 |
+| GET | `/health` | — | `{"status": "ok"}` | 200; 503 — БД недоступна |
 
 - **Алгоритм** — один на выбор: fixed window, sliding window или token bucket; обоснование — в `ARCHITECTURE.md`. Тесты от алгоритма не зависят: при `limit = N` и окне `W` секунд серия из N быстрых запросов проходит, (N+1)-й получает 429, а через `W + 1` секунд запросы снова проходят.
 - **Два правила одновременно**: запрос пропускается, только если не превышен ни глобальный лимит (все запросы к `/resource`), ни лимит его IP. Как считать отклонённые запросы — решите сами и опишите в `ARCHITECTURE.md`.

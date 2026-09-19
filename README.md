@@ -72,7 +72,7 @@
 
 | Команда | Что делает | Когда |
 |---|---|---|
-| `make check` | ruff, форматирование, mypy, ваши тесты — то же, что CI без Docker | перед каждым пушем |
+| `make check` | ruff, форматирование, mypy, ваши тесты — то же, что CI, кроме шагов с Docker | перед каждым пушем |
 | `make check-stage-1` | проверки `docs/ARCHITECTURE.md` и `docs/openapi.yaml` | этап 1 и дальше |
 | `make up` / `make down` | поднять / остановить сервис в docker compose (`down` удаляет данные) | с этапа 2 |
 | `make test-contract` | контрактные тесты этапов 2…N против поднятого сервиса | с этапа 2, после `make up` |
@@ -93,7 +93,7 @@
 | `loadtest` | `uv run locust -f loadtest/locustfile.py --headless --host http://localhost:8000 --users 50 --spawn-rate 10 --run-time 1m` |
 | `format` | `uv run ruff check --fix .`, `uv run ruff format .` |
 
-Тесты, которые останавливают контейнеры, можно исключить локально: `make test-contract` с аргументами не принимает, поэтому напрямую — `uv run python contract_tests/course.py test-contract -m "not restarts_containers"`.
+Тесты, которые останавливают контейнеры, можно исключить локально: `make test-contract` аргументов не принимает, поэтому напрямую — `uv run python contract_tests/course.py test-contract -m "not restarts_containers"`.
 
 ## Что проверяет CI
 
@@ -111,4 +111,4 @@ CI запускается на каждый pull request и на пуш в `main
 
 ## Как сдавать
 
-Работаете в ветке `develop`, сдаёте pull request `develop → main`, reviewer — `vladefr97`, в общий чат — «project-rate-limiter, ник, этап N, PR готов». Красный CI не смотрится. Мержит преподаватель. Подробно — в `Договоренности.md` курса и в разделе «Как сдать» каждого задания.
+Работаете в ветке `develop`, сдаёте pull request `develop → main`, reviewer — `vladefr97`, в общий чат — «project-rate-limiter, ник, этап N, PR готов». PR с красным CI преподаватель не смотрит. Мержит преподаватель. Подробно — в `Договоренности.md` курса и в разделе «Как сдать» каждого задания.

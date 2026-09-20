@@ -132,7 +132,7 @@ make test-contract
 
 ## Как сдать
 
-PR `develop → main`, reviewer `vladefr97`, скриншот сообщения бота — в описании PR. Сообщение в чат: «project-rate-limiter, ник, этап 5, PR готов». Подробно — в `Договоренности.md` курса.
+PR `develop → main`, reviewer `vladefr97`, скриншот сообщения бота — в описании PR. Сообщение в чат: «project-rate-limiter, ник, этап 5, PR готов». Подробно — в закреплённых сообщениях чата курса.
 
 ## Типичные ошибки
 

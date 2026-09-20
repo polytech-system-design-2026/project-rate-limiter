@@ -118,7 +118,7 @@ for i in 1 2 3 4; do curl -s -o /dev/null -D - http://localhost:8000/resource | 
 
 ## Как сдать
 
-PR `develop → main`, reviewer `vladefr97`. В описании PR — ссылка на раздел README «Нагрузочный тест». Сообщение в чат: «project-rate-limiter, ник, этап 3, PR готов». Подробно — в закреплённых сообщениях чата курса.
+PR `develop → main`, reviewer `vladefr97`. В описании PR — ссылка на раздел README «Нагрузочный тест». Сообщение в чат: «project-rate-limiter, ник, этап 3, PR готов». Подробно — в [README](../README.md#как-сдавать), раздел «Как сдавать».
 
 ## Типичные ошибки
 

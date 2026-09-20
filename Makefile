@@ -35,8 +35,9 @@ down:
 	docker compose down -v
 
 # Требует поднятого сервиса (make up). Гоняет contract_tests/stage_2 … stage_N по полю stage.
+# ARGS передаётся в pytest: make test-contract ARGS='-m "not restarts_containers"'
 test-contract:
-	uv run python contract_tests/course.py test-contract
+	uv run python contract_tests/course.py test-contract $(ARGS)
 
 # Этап 3. Требует поднятого сервиса; параметры — в tasks/TASK-3.md.
 loadtest:

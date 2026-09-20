@@ -63,8 +63,8 @@ def test_request_log_in_loki(client: httpx.Client) -> None:
         return bool(lines)
 
     require(
-        eventually(found, timeout=30, interval=2),
-        f"За 30 с в Loki не нашлось ни одной строки с request_id {request_id} "
+        eventually(found, timeout=60, interval=2),
+        f"За 60 с в Loki не нашлось ни одной строки с request_id {request_id} "
         '(запрос {service="app"} |= "<id>"). Проверьте по порядку: приложение пишет '
         "request_id в лог (docker compose logs app), Alloy видит контейнеры "
         "(http://localhost:12345), Loki готов (http://localhost:3100/ready).",
@@ -74,10 +74,14 @@ def test_request_log_in_loki(client: httpx.Client) -> None:
         records,
         f"Строка лога с request_id {request_id} — не JSON: {lines[0][:300]}",
     )
-    record = next((r for r in records if r.get("request_id") == request_id), records[0])
-    missing = sorted(REQUIRED_FIELDS - record.keys())
-    require(
-        not missing,
-        f"В JSON-логе запроса нет обязательных полей: {', '.join(missing)}. Строка: "
-        f"{json.dumps(record, ensure_ascii=False)[:300]}",
-    )
+    # Строк с этим request_id может быть несколько (бизнес-события пишутся с ним же),
+    # поэтому ищем строку запроса — ту, где есть все обязательные поля.
+    complete = [r for r in records if not REQUIRED_FIELDS - r.keys()]
+    if not complete:
+        closest = min(records, key=lambda r: len(REQUIRED_FIELDS - r.keys()))
+        missing = sorted(REQUIRED_FIELDS - closest.keys())
+        require(
+            False,
+            f"Ни в одной строке лога запроса нет всех обязательных полей. Не хватает: "
+            f"{', '.join(missing)}. Строка: {json.dumps(closest, ensure_ascii=False)[:300]}",
+        )

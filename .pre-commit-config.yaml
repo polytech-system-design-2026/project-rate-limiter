@@ -2,17 +2,20 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.6
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+  # Локальный хук, а не mirrors-mypy: та же версия mypy и те же зависимости,
+  # что у make lint и CI, иначе результаты расходятся.
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies: []
+        name: mypy
+        entry: uv run mypy app
+        language: system
         pass_filenames: false
-        args: [app]
+        types: [python]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

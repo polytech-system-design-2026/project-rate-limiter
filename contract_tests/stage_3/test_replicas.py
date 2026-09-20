@@ -3,7 +3,7 @@
 import httpx
 import pytest
 
-from contract_tests.helpers import require, stopped_service
+from contract_tests.helpers import compose, require, stopped_service, wait_until_healthy
 from contract_tests.limiter import HIGH, hit, set_limits, statuses, unique_ip, with_retries
 
 
@@ -39,6 +39,9 @@ def test_counters_shared_between_instances(client: httpx.Client) -> None:
 @pytest.mark.restarts_containers
 def test_limits_without_database(client: httpx.Client) -> None:
     set_limits(client, HIGH, 2)
+    # Перезапуск app стирает кэш правил внутри процесса: пройти тест можно только с Redis.
+    compose("restart", "app")
+    wait_until_healthy(client)
     with stopped_service(client, "db"):
 
         def scenario() -> str | None:

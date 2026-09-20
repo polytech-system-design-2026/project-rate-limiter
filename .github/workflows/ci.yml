@@ -57,7 +57,7 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
 
-      - run: uv sync --frozen
+      - run: uv sync --locked
 
       - name: ruff check
         run: uv run ruff check .
@@ -69,6 +69,7 @@ jobs:
         run: uv run mypy app
 
   unit-tests:
+    needs: meta
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -78,16 +79,22 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
 
-      - run: uv sync --frozen
+      - run: uv sync --locked
 
       - name: pytest (ваши тесты)
+        env:
+          STAGE_NUMBER: ${{ needs.meta.outputs.stage_number }}
         run: |
           set +e
           uv run pytest tests -v
           code=$?
           set -e
           if [ "$code" -eq 5 ]; then
-            echo "Своих тестов пока нет. На этапе 1 это нормально, с этапа 2 нужно не меньше 5 (tasks/TASK-2.md)."
+            if [ "$STAGE_NUMBER" -ge 2 ]; then
+              echo "В tests/ нет ни одного теста. С этапа 2 нужно не меньше 5 своих тестов на вашу логику (tasks/TASK-2.md)." >&2
+              exit 1
+            fi
+            echo "Своих тестов пока нет — на этапе 1 это нормально."
             exit 0
           fi
           exit "$code"
@@ -116,7 +123,7 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
 
-      - run: uv sync --frozen
+      - run: uv sync --locked
 
       - name: pytest contract_tests/stage_1
         run: uv run python contract_tests/course.py test-stage-1 -v
@@ -148,7 +155,7 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
 
-      - run: uv sync --frozen
+      - run: uv sync --locked
 
       - name: check docker-compose.yml exists
         run: |
@@ -199,6 +206,7 @@ jobs:
           wait_for Prometheus http://localhost:9090/-/ready
           wait_for Loki http://localhost:3100/ready
           wait_for Grafana http://localhost:3000/api/health
+          wait_for Alloy http://localhost:12345/-/ready
 
       - name: contract tests (этапы 2..N)
         run: uv run python contract_tests/course.py test-contract -v

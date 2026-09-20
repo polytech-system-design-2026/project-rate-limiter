@@ -9,6 +9,6 @@
 # Проверка: make check-stage-1. Отступы — только пробелами, по 2.
 openapi: 3.1.0
 info:
-  title: TODO название сервиса
+  title: название вашего сервиса
   version: 0.1.0
 paths: {}

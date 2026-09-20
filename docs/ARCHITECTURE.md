@@ -41,7 +41,7 @@
 | GET | `/resource` | — | `{"message": "ok"}` | 200; 429 — `{"detail": "rate limit exceeded", "retry_after": 7}` + заголовок `Retry-After: 7` |
 | GET | `/limits` | — | `{"global": {"limit": 100, "window_seconds": 60}, "per_ip": {"limit": 10, "window_seconds": 60}}` | 200 |
 | PUT | `/limits` | то же тело | то же | 200; 422 — `limit < 1`, `window_seconds < 1` |
-| GET | `/health` | — | `{"status": "ok"}` | 200 |
+| GET | `/health` | — | `{"status": "ok"}` | 200; 503 — PostgreSQL (с этапа 3 и Redis) недоступен |
 
 На этапе 3 у каждого ответа появляется заголовок `X-Instance` — имя экземпляра (hostname контейнера), который обработал запрос.
 

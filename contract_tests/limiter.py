@@ -1,5 +1,5 @@
 # ABOUTME: Helpers for rate limiter contract tests: setting rules, unique client IPs, bursts.
-# ABOUTME: A burst check is retried because a fixed-window boundary may fall inside a burst.
+# ABOUTME: The window is long enough that token-bucket refill during a burst cannot free a slot.
 import random
 import time
 from collections.abc import Callable
@@ -8,7 +8,7 @@ import httpx
 
 from contract_tests.helpers import require
 
-WINDOW = 3
+WINDOW = 10
 HIGH = 100_000
 ATTEMPTS = 3
 

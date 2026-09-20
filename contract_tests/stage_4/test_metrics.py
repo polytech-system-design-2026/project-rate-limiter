@@ -1,6 +1,5 @@
 # ABOUTME: Stage 4 metrics of the rate limiter, read through Prometheus because two app replicas
 # ABOUTME: each expose only their own /metrics: HTTP counters, histogram, ratelimit_rejected_total.
-import time
 from typing import Any
 
 import httpx
@@ -49,9 +48,22 @@ def test_http_requests_total_counts_requests(client: httpx.Client) -> None:
 
 
 def test_unknown_paths_do_not_create_series(client: httpx.Client) -> None:
+    require(
+        bool(query('up{job="app"}')),
+        'Prometheus не отдаёт метрики сервиса (up{job="app"} пуст) — проверить метки не на чем.',
+    )
     raw = f"/no/such/page-{unique_suffix()}"
+    before_404 = value('sum(http_requests_total{job="app", status="404"})')
     client.get(raw)
-    time.sleep(12)  # два интервала опроса Prometheus
+    require(
+        eventually(
+            lambda: value('sum(http_requests_total{job="app", status="404"})') - before_404 >= 1,
+            SCRAPE_WAIT,
+            interval=2,
+        ),
+        'Ответ 404 не попал в http_requests_total с меткой status="404". Считайте метрики для '
+        "любого ответа, включая ошибки, — иначе доля 5xx и алерт HighErrorRate не работают.",
+    )
     found = query(f'http_requests_total{{path="{raw}"}}')
     require(
         not found,

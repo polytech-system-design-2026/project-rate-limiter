@@ -20,7 +20,7 @@
    - возвращает его в заголовке `X-Request-ID` каждого ответа;
    - пишет по одной JSON-строке на запрос в stdout с полями `timestamp`, `level`, `message`, `request_id`, `method`, `path`, `status`, `duration_ms`.
 
-   Бизнес-события — например, «запрос отклонён» с адресом клиента — тоже пишутся в лог с `request_id`. Удобно хранить текущий `request_id` в `contextvars.ContextVar` и добавлять его в каждую запись через `logging.Filter`. Для JSON используйте `python-json-logger` — он уже в зависимостях. Access-лог uvicorn отключите (`--no-access-log`), чтобы на запрос была одна строка.
+   Бизнес-события — например, «запрос отклонён» с адресом клиента — тоже пишутся в лог с `request_id`. Удобно хранить текущий `request_id` в `contextvars.ContextVar` и добавлять его в каждую запись через `logging.Filter`. Для JSON используйте `python-json-logger` — он уже в зависимостях (импорт `from pythonjsonlogger.json import JsonFormatter`). По умолчанию он пишет поля `asctime` и `levelname`, а контракт требует `timestamp` и `level`: переименуйте их через `rename_fields={"asctime": "timestamp", "levelname": "level"}` (или `timestamp=True` — тогда время будет в ISO 8601). Access-лог uvicorn отключите (`--no-access-log`), чтобы на запрос была одна строка.
 
    Проверка: `curl -i -H "X-Request-ID: test-1" http://localhost:8000/health` и `docker compose logs app`.
 3. **`GET /metrics`** в формате Prometheus (библиотека `prometheus-client`, уже в зависимостях):
@@ -33,6 +33,8 @@
 
    Метка `path` — **шаблон маршрута**, а не сырой путь запроса. Шаблон лежит в `request.scope["route"].path` после того, как запрос обработан. Почему это важно: каждое уникальное значение метки — отдельный временной ряд в Prometheus. У ваших маршрутов нет параметров пути, но сырой путь всё равно опасен: любой сканер, перебирающий адреса, создаст по ряду на каждый адрес, и память Prometheus будет расти без предела. Запросы на несуществующие пути (сканеры, опечатки) маршрута не имеют — для них пишите в `path` одно общее значение, например `unmatched`. Объясните это своими словами в README, в разделе «Наблюдаемость».
 4. **Prometheus и Grafana в compose.** Добавьте сервисы и конфиги в `observability/`:
+   Конфиги монтируйте туда, где их ищут сервисы: всю папку `observability/prometheus` — в `/etc/prometheus`, `loki/config.yaml` — в контейнер Loki с `command: -config.file=<путь>`, `alloy/config.alloy` — с `command: run <путь>`, `grafana/provisioning` — в `/etc/grafana/provisioning`, а `grafana/dashboards` — в каталог, указанный в `dashboards.yaml`. Пути внутри `prometheus.yml` (например, `rules.yml`) считаются относительно папки с конфигом.
+
    - `observability/prometheus/prometheus.yml`: `scrape_interval: 5s`, `rule_files: [rules.yml]` и job `app`. Экземпляров два, поэтому статический адрес `app:8000` не подойдёт — Prometheus увидит только один. Пусть он находит все адреса имени `app` через DNS:
 
      ```yaml
@@ -193,5 +195,7 @@ PR `develop → main`, reviewer `vladefr97`, сообщение в чат: «pro
 - **В JSON дашборда другой `uid`** — Grafana сгенерировала свой при экспорте. Поставьте `"uid": "app-overview"` руками.
 - **Правило без `for`** срабатывает на единичный всплеск. `for` — сколько условие должно держаться, прежде чем алерт сработает.
 - **Логи не JSON**: где-то остался `print` или стандартный формат uvicorn. Каждая строка лога приложения — один JSON-объект.
+- **uvicorn запущен с `--workers 2` и больше.** Счётчики `prometheus-client` живут в процессе, и `/metrics` отдаёт метрики того процесса, который ответил: значения скачут, прироста в тесте нет. Запускайте один процесс.
+- **Windows: Alloy не стартует из-за сокета.** В Docker Desktop под Windows путь пишется как `//var/run/docker.sock:/var/run/docker.sock:ro`.
 - **Prometheus не видит `app`**: в `prometheus.yml` адрес `localhost:8000`. Внутри compose сервисы обращаются друг к другу по именам.
 - **Prometheus видит один экземпляр из двух**: статический `app:8000` вместо `dns_sd_configs`. Метрики второго экземпляра теряются, счётчики на дашборде занижены вдвое.
